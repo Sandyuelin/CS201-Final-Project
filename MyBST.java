@@ -41,6 +41,7 @@ class MyBST {
                 root.left = insertRec(root.left, record);
             } else if (record.getGivenName().compareTo(root.data.getGivenName()) > 0){
                 root.right = insertRec(root.right, record);
+
             }
         }
         return root;

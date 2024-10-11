@@ -93,11 +93,8 @@ public class DatabaseProcessing {
         catch (IOException e) {
             e.printStackTrace();
         }
-
-
-        // use my hashmap to count occurrences
-        // extract the top count words
     }
+
 }
         
     // Helper class to store word and its frequency

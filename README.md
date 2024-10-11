@@ -43,10 +43,8 @@ This project processes a database file (`people.txt`) that contains records of p
 
 Overall contribution ratio: 50-50.
 
-## Known Issues
-- [ ] List any incomplete features or bugs here.
-
-## Future Enhancements
-- [ ] Add support for other data types.
-- [ ] Implement additional sorting criteria based on birthdays.
-
+## Additional features
+- [ ] support other typesof records apart from people.txt, BST/Heap or Hashmap are generic
+- [ ] using email/phone/birthday to compare and order
+- [ ] graph illustration of the BST/ Heap/Hashmap
+- [ ] good testing stratey

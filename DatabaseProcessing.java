@@ -1,25 +1,19 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
-
-class ShortLengthException extends Exception {
-    public ShortLengthException(String message) {
-        super(message);
-    }
-}
+import java.util.ArrayList;
 
 public class DatabaseProcessing {
 
-    private MyBST bst = new MyBST();     
-    // private MyHashMap<String, Integer> wordCountMap = new MyHashMap<>();
+    private MyBST bst = new MyBST(); // 
+    private MyHeap heap = new MyHeap(); // heap to sort records
+    private MyHashMap wordFrequencyMap = new MyHashMap(100); // hash map to store word frequencies
 
     // Load data from file and insert into BST
     public void loadData(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String line;
             while ((line = br.readLine()) != null) {
-                // Assuming the delimiter is ';' based on your example
                 String[] data = line.split(";");
 
                 // Extracting fields from the data array
@@ -46,146 +40,158 @@ public class DatabaseProcessing {
             e.printStackTrace(); 
         }
     }
-    /*
+
+    // search for a PeopleRecord by family name and given name
+    // calls the search method in MyBST class
     public PeopleRecord search(String familyName, String givenName) {
-        return bst.search(familyName, givenName);
+        return bst.search(familyName, givenName);  // call the search method from MyBST
     }
-    public MyHeap sort(MyBST bst) {
-        MyHeap heap = new MyHeap(bst.root);
-        heap.heapify();
-        return heap;
-    }
-    
-    public List<WordFrequency> getMostFrequentWords(int count, int len) throws ShortLengthException{
-        // handle the invalid input for len 
-        if (len<3) {
-            System.err.println("Error: The length of the word must be at least 3.");
-            throw new ShortLengthException("The length of the word must be at least 3.");
+
+    // sort all records using MyHeap (ascending by family name)
+    public ArrayList<PeopleRecord> sort() {
+        ArrayList<PeopleRecord> sortedRecords = new ArrayList<>();
+
+        // get all records from BST and put them into a heap
+        ArrayList<PeopleRecord> recordsFromBST = bst.getAllRecords();
+
+        for (PeopleRecord record : recordsFromBST) {
+            heap.insert(record);
         }
-        wordCountMap.clear();
-        // filter the valid words
-        try(BufferedReader reader = new BufferedReader(new FileReader("people.txt"))){
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] data = line.split(";");
 
-                String [] fields = {
-                    data[0],// familyName
-                    data[1],//givenName
-                    data[2],//companyName
-                    data[3],//address
-                    data[4],//city
-                    data[5],//county
-                    data[6],//state
-                };
+        // extract records from the heap and add to sorted list
+        while (heap.size() > 0) {
+            sortedRecords.add(heap.remove()); // remove the largest element from the heap
+        }
 
-                for (String field : fields) {
-                    String[] words = field.split("\\s+");
-                    for (String word : words) {
-                        String cleanedWord = word.replaceAll("[^a-zA-Z]", "").toLowerCase();
+        return sortedRecords; 
+    }
 
-                        if(cleanedWord.length() >= len && cleanedWord.matches("[a-zA-Z]+")) {   
-                            int currentCount = wordCountMap.getOrDefault(cleanedWord, 0);
-                            wordCountMap.put(cleanedWord, wordCountMap.getOrDefault(cleanedWord, 0) + 1);
+    // 
+    public String[][] getMostFrequentWords(int count, int len) throws ShortLengthException {
+        if (len < 3) {
+            throw new ShortLengthException("The length must be at least 3.");
+        }
+    
+        wordFrequencyMap = new MyHashMap(100); // reset the frequency map
+        ArrayList<PeopleRecord> records = bst.getAllRecords();
+        ArrayList<String> wordsList = new ArrayList<>(); // to store words added to the map
+    
+        // process each record
+        for (PeopleRecord record : records) {
+            String[] fields = {
+                record.getGivenName(),
+                record.getFamilyName(),
+                record.getCompanyName(),
+                record.getAddress(),
+                record.getCity(),
+                record.getCounty(),
+                record.getState()
+            };
+    
+            // extract andcount words
+            for (String field : fields) {
+                for (String word : field.split("\\s+")) {
+                    String cleanedWord = word.replaceAll("[^a-zA-Z]", "");
+                    if (cleanedWord.length() >= len) {
+                        // increment frequency in MyHashMap
+                        int frequency = wordFrequencyMap.get(cleanedWord) != null ? 
+                            Integer.parseInt(wordFrequencyMap.get(cleanedWord).getGivenName()) : 0;
+                        frequency++;
+                        wordFrequencyMap.put(cleanedWord, new PeopleRecord(String.valueOf(frequency), cleanedWord));
+                        if (!wordsList.contains(cleanedWord)) {
+                            wordsList.add(cleanedWord); // keep track of the words
                         }
+                    }
+                }
             }
         }
     
-        catch (IOException e) {
-            e.printStackTrace();
+        // prepare result array
+        String[][] result = new String[count][2];
+        int index = 0;
+    
+        // find top 'count' words
+        while (index < count) {
+            String topWord = null;
+            int topFrequency = 0;
+    
+            // iterate through wordsList to find the highest frequency word
+            for (String word : wordsList) {
+                PeopleRecord record = wordFrequencyMap.get(word); // get record using the word key
+                if (record != null) {
+                    int frequency = Integer.parseInt(record.getGivenName());
+                    if (frequency > topFrequency) {
+                        topFrequency = frequency;
+                        topWord = word;
+                    }
+                }
+            }
+    
+            if (topWord != null) {
+                result[index][0] = topWord;
+                result[index][1] = String.valueOf(topFrequency);
+                index++;
+                wordFrequencyMap.delete(topWord); // remove to avoid recounting
+                wordsList.remove(topWord); // remove from the words list as well
+            } else {
+                break; // no more words found
+            }
+        }
+    
+        return result; // return the top 'count' most frequent words
+    }
+    
+
+    // Exception class for handling short length errors
+    public class ShortLengthException extends Exception {
+        public ShortLengthException(String message) {
+            super(message);
+        }
+    }
+    
+
+    public static void main(String[] args) {
+        DatabaseProcessing db = new DatabaseProcessing();
+
+        // Load data from the file
+        System.out.println("Loading data from 'people.txt'...");
+        db.loadData("people.txt");
+
+        // Test search()
+        System.out.println("\n--- Searching for 'James Butt' ---\n");
+        PeopleRecord searchResult = db.bst.search("Butt", "James");
+        if (searchResult != null) {
+            System.out.println("Record found: " + searchResult);
+        } else {
+            System.out.println("No records found with the name 'James Butt'.");
+        }
+
+        // Test sort()
+        System.out.println("\n--- Sorting Records by Family Name ---\n");
+        ArrayList<PeopleRecord> sortedList = db.sort();
+
+        System.out.println("Displaying first 10 sorted records: \n");
+        displayRecords(sortedList, 10);  // print only the first 10 sorted records
+
+        // Test getMostFrequentWords()
+        System.out.println("\n--- Getting Most Frequent Words ---");
+        try {
+            String[][] frequentWords = db.getMostFrequentWords(5, 3);
+            System.out.println("Top 5 most frequent words:");
+            for (String[] entry : frequentWords) {
+                if (entry[0] != null) { // Ensure entry is not null
+                    System.out.println(entry[0] + ": " + entry[1]);
+                }
+            }
+        } catch (ShortLengthException e) {
+            System.out.println(e.getMessage());
         }
     }
 
-}
-        
-    // Helper class to store word and its frequency
-    public static class WordFrequency {
-        private String word;
-        private int frequency;
-
-        public WordFrequency(String word, int frequency) {
-            this.word = word;
-            this.frequency = frequency;
-        }
-        public String getWord(){
-            return word;
-        }
-        public int getFrequency() {
-            return frequency;
-        }
-
-        @Override
-        public String toString() {
-            return word + ": " + frequency;
+    // print athe first n records to make data more readable
+    private static void displayRecords(ArrayList<PeopleRecord> records, int n) {
+        for (int i = 0; i < Math.min(n, records.size()); i++) {
+            System.out.println(records.get(i) + "\n");
         }
     }
-        */
-
-
-        // Testing method:
-
-        public void testInsertFromDataset() {
-            System.out.println("Inserting records from dataset...");
-            bst.insert(new PeopleRecord("John", "Smith", "ABC Corp", "123 Main St", "CityA", "CountyA", "StateA", "12345", "123-4567", "234-5678", "john@abc.com", "www.johnsmith.com", "1990-01-01"));
-            bst.insert(new PeopleRecord("Jane", "Doe", "XYZ Inc", "456 High St", "CityB", "CountyB", "StateB", "67890", "345-6789", "456-7890", "jane@xyz.com", "www.janedoe.com", "1992-02-02"));
-            bst.insert(new PeopleRecord("Emily", "Brown", "DEF LLC", "789 Oak St", "CityC", "CountyC", "StateC", "54321", "789-0123", "890-1234", "emily@def.com", "www.emilybrown.com", "1994-03-03"));
-            bst.insert(new PeopleRecord("Michael", "Johnson", "GHI Co", "321 Pine St", "CityD", "CountyD", "StateD", "98765", "654-3210", "765-4321", "michael@ghi.com", "www.michaeljohnson.com", "1988-04-04"));
-            bst.insert(new PeopleRecord("Sarah", "Williams", "JKL Inc", "654 Maple St", "CityE", "CountyE", "StateE", "87654", "432-1098", "543-2109", "sarah@jkl.com", "www.sarahwilliams.com", "1991-05-05"));
-    
-            assert bst.getInfo().contains("Total nodes: 5"); // Adjust based on number of records inserted
-            System.out.println("Insertion from dataset test passed!");
-        }
-    
-        // Test search functionality
-        public void testSearchFromDataset() {
-            System.out.println("Searching records...");
-            
-            PeopleRecord result1 = bst.search("Smith", "John");
-            assert result1 != null : "Record for John Smith not found";
-            assert result1.getEmail().equals("john@abc.com");
-            
-            PeopleRecord result2 = bst.search("Doe", "Jane");
-            assert result2 != null : "Record for Jane Doe not found";
-            assert result2.getPhone1().equals("345-6789");
-    
-            // Try searching for a non-existent record
-            PeopleRecord result3 = bst.search("Brown", "Michael");
-            assert result3 == null : "Non-existent record found incorrectly";
-            
-            System.out.println("Search from dataset test passed!");
-        }
-    
-        // Test the getInfo() method
-        public void testGetInfo() {
-            System.out.println("Testing getInfo()...");
-            String info = bst.getInfo();
-            System.out.println(info); // This will print something like: "Total nodes: 5, Height: 3"
-            
-            // You can also assert the values if you know the expected number of nodes and height
-            assert info.contains("Total nodes: 5");
-            assert info.contains("Height: "); // Adjust based on the actual tree height
-            
-            System.out.println("getInfo test passed!");
-        }
-    
-        // Main method to load data and test
-        public static void main(String[] args) {
-            DatabaseProcessing db = new DatabaseProcessing();
-    
-            // Load data from file
-            db.loadData("people.txt");
-            /*
-             * Total nodes: 498
-             * Height: 17
-             * theoretical minimum height is log2(498) = 8.96, 
-             */
-
-            db.testInsertFromDataset();
-            db.testSearchFromDataset();
-            db.testGetInfo();
-        }
-    
-    
-
-
 }

@@ -1,3 +1,7 @@
+// Hash map which stores records by family name
+// Using ArrayList based implementation 
+// With quadratic probing for collision handling
+
 import java.util.ArrayList;
 
 public class MyHashMap {
@@ -8,11 +12,11 @@ public class MyHashMap {
     // initialize hash map with a specified capacity
     public MyHashMap(int initialCapacity) {
         this.capacity = initialCapacity;
-        this.table = new ArrayList<>(); // create an empty arraylist
+        this.table = new ArrayList<>();
 
         // fill the arraylist with null values to initialize the capacity
         for (int i = 0; i < capacity; i++) {
-            table.add(null); // add null placeholders
+            table.add(null); 
         }
 
         this.size = 0;
@@ -20,17 +24,17 @@ public class MyHashMap {
 
     // insert a new record into the hash map
     public void put(String key, PeopleRecord record) {
-        int hash = hash(key); // get hash index
+        int hash = hash(key); 
         int i = 0;
-        int index = quadraticProbe(hash, i); // quadratic probing to handle collisions
+        int index = quadraticProbe(hash, i);
 
-        // find an empty spot using quadratic probing
+        // find an empty spot
         while (table.get(index) != null) {
             i++;
             index = quadraticProbe(hash, i);
         }
 
-        table.set(index, record); // insert the record at the calculated index
+        table.set(index, record); 
         size++;
 
         // resize the table if load factor exceeds 0.75
@@ -41,14 +45,14 @@ public class MyHashMap {
 
     // retrieve a record based on the key (person's name)
     public PeopleRecord get(String key) {
-        int hash = hash(key); // get hash index
+        int hash = hash(key);
         int i = 0;
         int index = quadraticProbe(hash, i); // quadratic probing to find the key
 
-        // loop until we find the matching key or encounter a null slot
+        // loop until we find the matching key or a null slot
         while (table.get(index) != null) {
             if (table.get(index).getFamilyName().equals(key)) {
-                return table.get(index); // return the matching record
+                return table.get(index); 
             }
             i++;
             index = quadraticProbe(hash, i);
@@ -59,14 +63,13 @@ public class MyHashMap {
 
     // delete a record by key
     public void delete(String key) {
-        int hash = hash(key); // get hash index
+        int hash = hash(key);
         int i = 0;
-        int index = quadraticProbe(hash, i); // quadratic probing to find the key
+        int index = quadraticProbe(hash, i);
 
-        // loop until we find the matching key or encounter a null slot
         while (table.get(index) != null) {
             if (table.get(index).getFamilyName().equals(key)) {
-                table.set(index, null); // set the index to null (delete)
+                table.set(index, null); // set index to null
                 size--;
                 break;
             }
@@ -75,7 +78,12 @@ public class MyHashMap {
         }
     }
 
-    // hash function to calculate the index for the key
+    // return current size of hash map
+    public int size() {
+        return size;  // Return the number of elements in the hash map
+    }
+
+    // hash function to calculate index for key
     private int hash(String key) {
         return Math.abs(key.hashCode()) % capacity;
     }
@@ -85,11 +93,11 @@ public class MyHashMap {
         return (hash + i * i) % capacity;
     }
 
-    // resize the hash map when load factor exceeds the threshold
+    // resize the hash map when load factor exceeds threshold
     private void resize() {
-        capacity *= 2; // double the capacity
-        ArrayList<PeopleRecord> oldTable = table; // store old table
-        table = new ArrayList<>(); // create a new empty arraylist
+        capacity *= 2; 
+        ArrayList<PeopleRecord> oldTable = table; 
+        table = new ArrayList<>(); 
 
         // initialize the new table with null values
         for (int i = 0; i < capacity; i++) {
@@ -98,7 +106,7 @@ public class MyHashMap {
 
         size = 0;
 
-        // rehash all non-null records from the old table into the new table
+        // rehash all non-null records from old table into new table
         for (PeopleRecord record : oldTable) {
             if (record != null) {
                 put(record.getFamilyName(), record); // insert the record into the new table

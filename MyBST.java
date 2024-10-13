@@ -1,17 +1,23 @@
+import java.util.ArrayList;
+
 class MyBST {
     /* 
      A binary search tree for managing people's records
      methods of insertion, getInfo, and search; specifically add deletion methods
     */
+
     class Node {
         PeopleRecord data;
         Node left, right;
+
         Node(PeopleRecord record) {
             data = record;
             left = right = null;
     }
 }
+
     private Node root;
+
     public MyBST() {
         root = null;
     }
@@ -20,6 +26,7 @@ class MyBST {
     public void insert(PeopleRecord record) {
         root = insertRec(root, record);
     }
+
     private Node insertRec (Node root, PeopleRecord record){
         if (root ==null ){
             root = new Node(record);
@@ -30,6 +37,7 @@ class MyBST {
         } else if (record.getFamilyName().compareTo(root.data.getFamilyName()) > 0){
             root.right = insertRec(root.right, record);
         }
+
         else {
             if (record.getGivenName().compareTo(root.data.getGivenName()) < 0){
                 root.left = insertRec(root.left, record);
@@ -44,6 +52,7 @@ class MyBST {
     public PeopleRecord search(String familyName, String givenName) {
         return searchRec(root, familyName, givenName);
     }
+
     private PeopleRecord searchRec(Node root, String familyName, String givenName) {
         if (root == null) {
             return null;
@@ -62,25 +71,31 @@ class MyBST {
             }
         }
     }
+
     public String getInfo() {
         return "Total nodes: " + getTotalNodes(root) + ", Height: " + getHeight(root);
     }
+
     private int getTotalNodes(Node root){
         if (root == null) {
             return 0;
         }
         return 1 + getTotalNodes(root.left) + getTotalNodes(root.right);
     }
+
     private int getHeight (Node root){
         if (root == null) {
             return 0;
         }
         return 1 + Math.max(getHeight(root.left), getHeight(root.right));
     }
+
     // Deletion: delete a record by family name and given name
+
     public void delete(String familyName, String givenName) {
         root = deleteRec(root, familyName, givenName);
     }
+
     private Node deleteRec(Node root, String familyName, String givenName) {
         if (root == null) {
             return root;
@@ -111,6 +126,7 @@ class MyBST {
         }
         return root;
     }
+
     // minValue: a helper function to find the minimum value node in a subtree
     private PeopleRecord minValue(Node root) {
         PeopleRecord minv = root.data;
@@ -120,4 +136,22 @@ class MyBST {
         }
         return minv;
     }
+
+    
+    // return all records as an arraylist (for the purpose of converting bst to heap)
+    public ArrayList<PeopleRecord> getAllRecords() {
+        ArrayList<PeopleRecord> records = new ArrayList<>();
+        getAllRecordsHelper(root, records);
+        return records;
+    }
+
+    // recursively traverse through tree nodes/children
+    private void getAllRecordsHelper(Node node, ArrayList<PeopleRecord> records) {
+        if (node != null) {
+            records.add(node.data); // add current node's data (order doesn't matter)
+            getAllRecordsHelper(node.left, records);  // repeat for left subtree
+            getAllRecordsHelper(node.right, records); // repeat for right subtree
+        }
+    }
+
 }

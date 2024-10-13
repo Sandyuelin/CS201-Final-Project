@@ -3,8 +3,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Comparator;
 
-class PeopleRecord {
+class PeopleRecord implements Comparable<PeopleRecord> {
     private String givenName;
     private String familyName;
     private String companyName;
@@ -17,7 +21,7 @@ class PeopleRecord {
     private String phone2;
     private String email;
     private String web;
-    private String birthday;
+    private LocalDate birthday;
 
     // Constructor
     public PeopleRecord(String givenName, String familyName, String companyName, String address, String city,
@@ -35,12 +39,20 @@ class PeopleRecord {
         this.phone2 = phone2;
         this.email = email;
         this.web = web;
-        this.birthday = birthday;
+        this.birthday = LocalDate.parse(birthday, DateTimeFormatter.ISO_DATE);
     }
+
+  
+    public int compareTo(PeopleRecord other) {
+        if (this.birthday == null && other.birthday == null) return 0; // Both null are equal
+        if (this.birthday == null) return 1; // Null birthdays come last
+        if (other.birthday == null) return -1; // Non-null comes first
+        return this.birthday.compareTo(other.birthday);
+    }
+
     public PeopleRecord(String givenName, String familyName) {
         this.givenName = givenName;
         this.familyName = familyName;
-        // You can set other fields to default values, if needed.
         this.companyName = "";
         this.address = "";
         this.city = "";
@@ -51,10 +63,9 @@ class PeopleRecord {
         this.phone2 = "";
         this.email = "";
         this.web = "";
-        this.birthday = "";
+        this.birthday = null;
     }   
 
-    // Getters for all attributes
     public String getGivenName() {
         return givenName;
     }
@@ -103,11 +114,10 @@ class PeopleRecord {
         return web;
     }
 
-    public String getBirthday() {
+    public LocalDate getBirthday() {
         return birthday;
     }
 
-    // Override toString for easy printing
     @Override
     public String toString() {
         return givenName + " " + familyName + ", " + companyName + ", " + address + ", " + city + ", " + county + ", "
@@ -115,11 +125,8 @@ class PeopleRecord {
     }
 }
 
-
-
-
 class MyBST {
-    // Node class definition
+
     public static class Node {
         PeopleRecord data;
         Node left, right;
@@ -135,8 +142,7 @@ class MyBST {
     public MyBST() {
         root = null;
     }
-
-    // Insertion
+    
     public void insert(PeopleRecord record) {
         root = insertRec(root, record);
     }
@@ -159,12 +165,11 @@ class MyBST {
             } else if (givenComparison > 0) {
                 root.right = insertRec(root.right, record);
             }
-            // Optionally handle duplicates here if needed
+           
         }
         return root;
     }
 
-    // Search: search for a record by family name and given name
     public List<PeopleRecord> search(String familyName, String givenName) {
         List<PeopleRecord> results = new ArrayList<>();
         searchHelper(root, familyName, givenName, results);
@@ -176,18 +181,15 @@ class MyBST {
             return;
         }
 
-        // Check if current node matches the search criteria
         if (node.data.getFamilyName().equalsIgnoreCase(familyName) &&
             node.data.getGivenName().equalsIgnoreCase(givenName)) {
             results.add(node.data);
         }
 
-        // Continue searching in left and right subtrees
         searchHelper(node.left, familyName, givenName, results);
         searchHelper(node.right, familyName, givenName, results);
     }
 
-    // Deletion: delete a record by family name and given name
     public void delete(String familyName, String givenName) {
         root = deleteRec(root, familyName, givenName);
     }
@@ -224,6 +226,19 @@ class MyBST {
             }
         }
         return root;
+    }
+    public List<PeopleRecord> inOrder() {
+        List<PeopleRecord> records = new ArrayList<>();
+        inOrderRec(root, records);
+        return records;
+    }
+
+    private void inOrderRec(Node root, List<PeopleRecord> records) {
+        if (root != null) {
+            inOrderRec(root.left, records); // Visit left subtree
+            records.add(root.data);        // Visit node
+            inOrderRec(root.right, records); // Visit right subtree
+        }
     }
 
     // minValue: a helper function to find the minimum value node in a subtree
@@ -288,8 +303,6 @@ class MyBST {
     }
 }
 
-// Max-heap which stores records by name (z on top, a on bottom)
-// Using ArrayList based implementation
 
 
 class MyHeap {
@@ -384,10 +397,6 @@ class MyHeap {
     }
 
 }
-
-// Hash map which stores records by family name
-// Using ArrayList based implementation 
-// With quadratic probing for collision handling
 
 class MyHashMap {
     private ArrayList<PeopleRecord> table;
@@ -499,9 +508,6 @@ class MyHashMap {
         }
     }
 }
-
-
-
 
 class ShortLengthException extends Exception {
     public ShortLengthException(String message) {
@@ -667,10 +673,24 @@ public class DatabaseProcessing {
         }
     }
 
+
+    public ArrayList<PeopleRecord> sortByBirthday() {
+        List<PeopleRecord> records = bst.inOrder(); // Get records in order
+        Collections.sort(records, new Comparator<PeopleRecord>() {
+            @Override
+            public int compare(PeopleRecord r1, PeopleRecord r2) {
+                return r1.getBirthday().compareTo(r2.getBirthday());
+            }
+        });
+        return new ArrayList<>(records);
+    }
+
+
+
     
     // Test insertion functionality
 
-        public void testInsertFromDataset() {
+    public void testInsertFromDataset() {
             System.out.println("Inserting records from dataset...");
             bst.insert(new PeopleRecord("John", "Smith", "ABC Corp", "123 Main St", "CityA", "CountyA", "StateA", "12345", "123-4567", "234-5678", "john@abc.com", "www.johnsmith.com", "1990-01-01"));
             bst.insert(new PeopleRecord("Jane", "Doe", "XYZ Inc", "456 High St", "CityB", "CountyB", "StateB", "67890", "345-6789", "456-7890", "jane@xyz.com", "www.janedoe.com", "1992-02-02"));
@@ -684,7 +704,7 @@ public class DatabaseProcessing {
     
         // Test search functionality
         // Test search functionality
-public void testSearchFromDataset() {
+    public void testSearchFromDataset() {
     System.out.println("Searching records...");
 
     // Test case 1: Search for an existing record
@@ -764,6 +784,11 @@ public void testSearchFromDataset() {
 
         System.out.println("Displaying first 10 sorted records: \n");
         displayRecords(sortedList, 10);  // print only the first 10 sorted records
+
+        System.out.println("\n--- Sorting Records by Birthday ---\n");
+        ArrayList<PeopleRecord> sortedByBirthday = db.sortByBirthday();
+        System.out.println("Displaying first 10 sorted records by birthday:\n");
+        displayRecords(sortedByBirthday, 10); 
 
         // Test getMostFrequentWords()
         System.out.println("\n--- Getting Most Frequent Words ---");

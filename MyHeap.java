@@ -31,6 +31,11 @@ public class MyHeap {
         return root;
     }
 
+    // return the size of the heap
+    public int size() {
+        return heap.size();
+    }
+
     // recursively swap node n with its parent node p while n is bigger than p
     private void trickleUp(int n) {
         if (n == 0) {

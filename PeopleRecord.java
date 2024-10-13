@@ -32,6 +32,12 @@ class PeopleRecord {
         this.birthday = birthday;
     }
 
+    // Constructor to create a record for words and frequencies
+    public PeopleRecord(String frequency, String word) {
+        this.givenName = frequency;
+        this.familyName = word;
+    }
+
     // Getters for all attributes
     public String getGivenName() {
         return givenName;
